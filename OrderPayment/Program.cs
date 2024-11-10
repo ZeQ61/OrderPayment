@@ -1,44 +1,51 @@
 using Microsoft.EntityFrameworkCore;
+using OrderPayment.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Servisleri ekleyin
 builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 
-// 1. Adým: DbContext'i eklemek
-// Veritabaný baðlantý dizesini 'appsettings.json' dosyasýndan okuma
+// SmsService baðýmlýlýðýný ekleyin
+builder.Services.AddSingleton<SmsService>();
+
+// SQL Server baðlantýsý ile DbContext ekleyin
 builder.Services.AddDbContext<OrderPaymentDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
-// 2. Adým: Veritabaný baðlantý dizesini appsettings.json'a eklediðinizden emin olun
-// Bu dosyada aþaðýdaki gibi bir baðlantý dizesi olmalý:
-//
-/*
-"ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=OrderPaymentDb;Trusted_Connection=True;MultipleActiveResultSets=true"
-}
-*/
+// Session ve MemoryCache ekleyin
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Oturum süresi
+    options.Cookie.HttpOnly = true;                // Güvenlik için sadece HTTP eriþimi
+    options.Cookie.IsEssential = true;             // GDPR uyumluluðu
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Hata iþleme ve güvenlik yapýlandýrmalarý
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
+
+// Session'ý etkinleþtir
+app.UseSession();
 
 app.UseAuthorization();
 
-// Default route
+// Varsayýlan rota ayarýný SmsController'daki SendSms action'ýna yönlendirin
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Sms}/{action=SendSms}/{id?}"
+);
 
 app.Run();
