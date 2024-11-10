@@ -2,41 +2,42 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using OrderPayment.Models;
+using System.Text.Json.Serialization;
 
-public class User
+namespace OrderPayment.Models
 {
-    [Key]
-    public int Id { get; set; }
+    public class User
+    {
+        [Key]
+        public int Id { get; set; }
 
-    [Required]
-    [StringLength(50, ErrorMessage = "First name cannot be longer than 50 characters.")]
-    public string FirstName { get; set; } = string.Empty;
+        [Required]
+        [StringLength(50, ErrorMessage = "First name cannot be longer than 50 characters.")]
+        public string FirstName { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(50, ErrorMessage = "Last name cannot be longer than 50 characters.")]
-    public string LastName { get; set; } = string.Empty;
+        [Required]
+        [StringLength(50, ErrorMessage = "Last name cannot be longer than 50 characters.")]
+        public string LastName { get; set; } = string.Empty;
 
+        [Required]
+        [StringLength(256, ErrorMessage = "Password cannot be longer than 256 characters.")]
+        public string PasswordHash { get; set; } = string.Empty;  // Şifreyi düz metin yerine hash'li olarak saklayacağız
 
+        [Phone(ErrorMessage = "Invalid phone number format.")]
+        public string? PhoneNumber { get; set; } = string.Empty;
 
-    [Required]
-    public string PasswordHash { get; set; } = string.Empty;
+        [Required]
+        [DataType(DataType.Date)]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    [Phone(ErrorMessage = "Invalid phone number format.")]
-    public string? PhoneNumber { get; set; } = string.Empty;
+        [Required]
+        public bool IsActive { get; set; } = false;  // Kullanıcının aktif olup olmadığını belirten alan
 
+        // Verification Code için ilişki
+        [JsonIgnore]
+        public List<VerificationCode> VerificationCodes { get; set; } = new List<VerificationCode>();
 
-    [Required]
-    [DataType(DataType.Date)]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [StringLength(6, ErrorMessage = "Verification code must be 6 characters.")]
-    public string? VerificationCode { get; set; } // Verification code for user validation
-
-    [Required]
-    [DataType(DataType.Date)]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    // Foreign Key - One-to-Many relation with Orders
-    public List<Order> Orders { get; set; } = new List<Order>();
+        // Foreign Key - One-to-Many relation with Orders
+        public List<Order> Orders { get; set; } = new List<Order>();
+    }
 }

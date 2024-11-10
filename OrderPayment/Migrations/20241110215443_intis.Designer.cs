@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace OrderPayment.Migrations
 {
     [DbContext(typeof(OrderPaymentDbContext))]
-    partial class OrderPaymentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241110215443_intis")]
+    partial class intis
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,7 +117,7 @@ namespace OrderPayment.Migrations
                     b.ToTable("OrderItems");
                 });
 
-            modelBuilder.Entity("OrderPayment.Models.User", b =>
+            modelBuilder.Entity("User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -133,9 +136,6 @@ namespace OrderPayment.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -143,11 +143,17 @@ namespace OrderPayment.Migrations
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("VerificationCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
 
                     b.HasKey("Id");
 
@@ -156,42 +162,13 @@ namespace OrderPayment.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("OrderPayment.Models.VerificationCode", b =>
-                {
-                    b.Property<int>("VerificationCodeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VerificationCodeId"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("nvarchar(6)");
-
-                    b.Property<int>("ExpiryInSeconds")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("VerificationCodeId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("VerificationCodes");
-                });
-
             modelBuilder.Entity("OrderPayment.Models.Order", b =>
                 {
                     b.HasOne("OrderPayment.Models.Admin", null)
                         .WithMany("ManagedOrders")
                         .HasForeignKey("AdminId");
 
-                    b.HasOne("OrderPayment.Models.User", "User")
+                    b.HasOne("User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -211,22 +188,11 @@ namespace OrderPayment.Migrations
                     b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("OrderPayment.Models.User", b =>
+            modelBuilder.Entity("User", b =>
                 {
                     b.HasOne("OrderPayment.Models.Admin", null)
                         .WithMany("ManagedUsers")
                         .HasForeignKey("AdminId");
-                });
-
-            modelBuilder.Entity("OrderPayment.Models.VerificationCode", b =>
-                {
-                    b.HasOne("OrderPayment.Models.User", "User")
-                        .WithMany("VerificationCodes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("OrderPayment.Models.Admin", b =>
@@ -241,11 +207,9 @@ namespace OrderPayment.Migrations
                     b.Navigation("OrderItems");
                 });
 
-            modelBuilder.Entity("OrderPayment.Models.User", b =>
+            modelBuilder.Entity("User", b =>
                 {
                     b.Navigation("Orders");
-
-                    b.Navigation("VerificationCodes");
                 });
 #pragma warning restore 612, 618
         }

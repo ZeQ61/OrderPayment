@@ -16,19 +16,69 @@
             </div>
             <button type="submit" class="btn btn-primary">Doğrula</button>
         </form>
+
         <div id="resultMessage" class="mt-3"></div>
+
+        <!-- Kalan Süreyi Göster -->
+        <div id="remainingTime" class="mt-3"></div>
+
+        <!-- Yeniden Doğrulama Kodu Gönder Butonu (Aktif olmayan buton) -->
+        <button id="resendButton" class="btn btn-secondary mt-3" disabled>Yeni Kod Gönder</button>
     </div>
 
     <script>
         $(document).ready(function () {
+            var remainingTime = 0; // Kalan süreyi tutacak değişken
+
+            // Doğrulama formu gönderildiğinde
             $('#verifyForm').submit(function (e) {
                 e.preventDefault();
 
                 var verificationCode = $('#VerificationCode').val();
 
-                $.post('@Url.Action("VerifyCode", "Sms")', { verificationCode: verificationCode }, function (response) {
+                $.post('/Sms/VerifyCode', { verificationCode: verificationCode }, function (response) {
                     if (response.success) {
                         $('#resultMessage').html('<div class="alert alert-success">' + response.message + '</div>');
+                    } else {
+                        $('#resultMessage').html('<div class="alert alert-danger">' + response.message + '</div>');
+                    }
+                });
+            });
+
+            // Doğrulama sayfası açıldığında kalan süreyi almak için
+            $.post('/Sms/GetRemainingTime', {}, function (response) {
+                if (response.success) {
+                    // Kalan süreyi göster
+                    remainingTime = response.remainingTime; // Süreyi saniye cinsinden al
+                    updateRemainingTime();
+                } else {
+                    $('#remainingTime').html('Doğrulama kodu bulunamadı veya süresi dolmuş.');
+                }
+            });
+
+            // Kalan süreyi güncellemek için interval
+            function updateRemainingTime() {
+                if (remainingTime > 0) {
+                    var minutes = Math.floor(remainingTime / 60);
+                    var seconds = remainingTime % 60;
+                    $('#remainingTime').html('Kalan Süre: ' + minutes + ' dakika ' + seconds + ' saniye');
+                    remainingTime--; // Süreyi bir azalt
+                    setTimeout(updateRemainingTime, 1000); // Her saniyede bir güncelle
+                } else {
+                    $('#remainingTime').html('Doğrulama kodu süresi doldu.');
+                    $('#resendButton').prop('disabled', false); // Süre dolduğunda butonu aktif et
+                }
+            }
+
+            // Yeni doğrulama kodu gönder butonuna tıklandığında
+            $('#resendButton').click(function () {
+                // Yeni doğrulama kodu gönderme isteği
+                $.post('/Sms/ResendVerificationCode', {}, function (response) {
+                    if (response.success) {
+                        $('#resultMessage').html('<div class="alert alert-success">' + response.message + '</div>');
+                        remainingTime = 300; // Yeni 5 dakika başlat
+                        $('#resendButton').prop('disabled', true); // Butonu yeniden devre dışı bırak
+                        updateRemainingTime(); // Kalan süreyi güncelle
                     } else {
                         $('#resultMessage').html('<div class="alert alert-danger">' + response.message + '</div>');
                     }

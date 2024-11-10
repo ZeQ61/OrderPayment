@@ -5,9 +5,9 @@ using System;
 
 public class SmsService
 {
-    private readonly string _accountSid = "ACf8abc6c43cd072335b363c68ac57fae2";
-    private readonly string _authToken = "07ac380e2134dc561581e3330fdfdc62";
-    private readonly string _fromPhoneNumber = "+13025240229";
+    private readonly string _accountSid = "AC8cae01f4e341bfccf50cf361b381231d";
+    private readonly string _authToken = "8a73fd1102f994f81d79d46ebd44d709";
+    private readonly string _fromPhoneNumber = "+19198137836";
 
     public SmsService()
     {

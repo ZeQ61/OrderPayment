@@ -26,6 +26,17 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+// Veritabanýný her uygulama çalýþtýrýldýðýnda sýfýrlama iþlemi
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<OrderPaymentDbContext>();
+
+    // Veritabanýný sil ve yeniden oluþtur
+    context.Database.EnsureDeleted();  // Veritabanýný siler
+    context.Database.Migrate();        // Veritabanýný yeniden oluþturur
+}
+
 // Hata iþleme ve güvenlik yapýlandýrmalarý
 if (!app.Environment.IsDevelopment())
 {
