@@ -1,0 +1,40 @@
+﻿
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ana Sayfa - Admin Paneli</title>
+    <link rel="stylesheet" href="~/css/styles.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h1>Admin Paneli</h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html" class="active">Ana Sayfa</a></li>
+                    <li><a href="add-product.html">Ürün Ekle</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <h2>Ürün Listesi</h2>
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Ürün Adı</th>
+                        <th>Stok Miktarı</th>
+                        <th>Birim</th>
+                        <th>Fiyat (TL)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Ürünler JavaScript ile buraya eklenecek -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+    <script src="~/js/AdminPanelscript.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ürün Ekle - Admin Paneli</title>
+    <link rel="stylesheet" href="~/css/styles.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h1>Admin Paneli</h1>
+            <nav>
+                <ul>
+                    <li><a href="@Url.Action("AdminPanel", "Admin")" class="active">Ana Sayfa</a></li>
+                    <li><a href="@Url.Action("AddProduct", "Admin")" class="active">Ürün Ekle</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main class="content">
+            <h2>Yeni Ürün Ekle</h2>
+            <form id="productForm">
+                <label for="name">Ürün Adı:</label>
+                <input type="text" id="name" required>
+
+                <label for="stock">Stok Miktarı:</label>
+                <input type="number" id="stock" step="0.01" required>
+
+                <label for="unit">Birim:</label>
+                <select id="unit">
+                    <option value="kg">Kilogram (kg)</option>
+                    <option value="lt">Litre (lt)</option>
+                </select>
+
+                <label for="price">Fiyat (TL):</label>
+                <input type="number" id="price" step="0.01" required>
+
+                <button type="submit">Ürün Ekle</button>
+            </form>
+        </main>
+    </div>
+    <script src="~/js/AddProductscript.js"></script>
+</body>
+</html>
