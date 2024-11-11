@@ -13,7 +13,7 @@ namespace OrderPayment.Controllers
         // Ürün Ekle Sayfası
         public IActionResult AddProduct()
         {
-            return View();  // Ürün Ekle görünümüne yönlendirir
+            return View();  // Ürün Ekle görünümüne yönlendirir//
         }
 
         // Ürün Düzenle Sayfası
