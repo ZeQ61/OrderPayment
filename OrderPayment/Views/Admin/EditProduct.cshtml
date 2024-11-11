@@ -1,46 +1,24 @@
-﻿
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ürün Düzenle - Admin Paneli</title>
-    <link rel="stylesheet" href="~/css/styles.css">
-</head>
-<body>
-    <div class="admin-layout">
-        <aside class="sidebar">
-            <h1>Admin Paneli</h1>
-            <nav>
-                <ul>
-                    <li><a href="AdminPanel.html">Ana Sayfa</a></li>
-                    <li><a href="AddProduct.html">Ürün Ekle</a></li>
-                </ul>
-            </nav>
-        </aside>
-        <main class="content">
-            <h2>Ürün Düzenle</h2>
-            <form id="editProductForm">
-                <input type="hidden" id="productId">
-                <label for="name">Ürün Adı:</label>
-                <input type="text" id="name" required>
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
 
-                <label for="stock">Stok Miktarı:</label>
-                <input type="number" id="stock" step="0.01" required>
+<h2>Ürün Düzenle</h2>
+<form id="editProductForm">
+    <input type="hidden" id="productId">
+    <label for="name">Ürün Adı:</label>
+    <input type="text" id="name" required>
 
-                <label for="unit">Birim:</label>
-                <select id="unit">
-                    <option value="kg">Kilogram (kg)</option>
-                    <option value="lt">Litre (lt)</option>
-                </select>
+    <label for="stock">Stok Miktarı:</label>
+    <input type="number" id="stock" step="0.01" required>
 
-                <label for="price">Fiyat (TL):</label>
-                <input type="number" id="price" step="0.01" required>
+    <label for="unit">Birim:</label>
+    <select id="unit">
+        <option value="kg">Kilogram (kg)</option>
+        <option value="lt">Litre (lt)</option>
+    </select>
 
-                <button type="submit">Ürünü Güncelle</button>
-            </form>
-        </main>
-    </div>
-    <script src="~/js/EditProductscript.js"></script>
-</body>
-</html>
+    <label for="price">Fiyat (TL):</label>
+    <input type="number" id="price" step="0.01" required>
+
+    <button type="submit">Ürünü Güncelle</button>
+</form>

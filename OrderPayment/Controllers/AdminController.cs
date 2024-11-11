@@ -1,25 +1,60 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using OrderPayment.Models;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace OrderPayment.Controllers
 {
     public class AdminController : Controller
     {
-        // Admin Paneli Sayfası//
+        private readonly OrderPaymentDbContext _context;
+
+        public AdminController(OrderPaymentDbContext context)
+        {
+            _context = context;
+        }
+
+        // Admin Paneli Sayfası
         public IActionResult AdminPanel()
         {
-            return View();  // Admin Paneli görünümüne yönlendirir//
+            var products = _context.products.ToList(); // Ürünleri veritabanından al
+            return View(products); // Veritabanından alınan ürünleri view'a gönder
         }
 
-        // Ürün Ekle Sayfası
+        // Yeni Ürün Ekle Sayfası
+        [HttpGet]
         public IActionResult AddProduct()
         {
-            return View();  // Ürün Ekle görünümüne yönlendirir//
+            return View();
         }
 
-        // Ürün Düzenle Sayfası
-        public IActionResult EditProduct()
+        [HttpPost]
+        public async Task<IActionResult> AddProduct(Product product, IFormFile image)
         {
-            return View();  // Ürün Düzenle görünümüne yönlendirir
+            if (ModelState.IsValid)
+            {
+                // Resmi base64 formatına çevir
+                if (image != null)
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await image.CopyToAsync(memoryStream);
+                        product.Image = Convert.ToBase64String(memoryStream.ToArray());
+                    }
+                }
+
+                // Ürünü veritabanına kaydet
+                _context.products.Add(product);
+                await _context.SaveChangesAsync();
+
+                // Ürün ekleme sonrası AdminPanel'e yönlendir
+                return RedirectToAction("AdminPanel");
+            }
+
+            return View(product);
         }
+
+
     }
 }
