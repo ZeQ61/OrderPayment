@@ -5,25 +5,25 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
 
-public class SmsController : Controller
+public class UserController : Controller
 {
     private readonly SmsService _smsService;
     private readonly OrderPaymentDbContext _context;
 
-    public SmsController(SmsService smsService, OrderPaymentDbContext context)
+    public UserController(SmsService smsService, OrderPaymentDbContext context)
     {
         _smsService = smsService;
         _context = context;
     }
 
     [HttpGet]
-    public IActionResult SendSms()
+    public IActionResult Register()
     {
-        return View("SendSms");
+        return View();
     }
 
     [HttpGet]
-    public IActionResult VerifySms()
+    public IActionResult VerifyCode()
     {
         return View();
     }

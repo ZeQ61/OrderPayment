@@ -36,7 +36,7 @@
 
                 var verificationCode = $('#VerificationCode').val();
 
-                $.post('/Sms/VerifyCode', { verificationCode: verificationCode }, function (response) {
+                $.post('/User/VerifyCode', { verificationCode: verificationCode }, function (response) {
                     if (response.success) {
                         $('#resultMessage').html('<div class="alert alert-success">' + response.message + '</div>');
                     } else {
@@ -46,7 +46,7 @@
             });
 
             // Doğrulama sayfası açıldığında kalan süreyi almak için
-            $.post('/Sms/GetRemainingTime', {}, function (response) {
+            $.post('/User/GetRemainingTime', {}, function (response) {
                 if (response.success) {
                     // Kalan süreyi göster
                     remainingTime = response.remainingTime; // Süreyi saniye cinsinden al
@@ -73,7 +73,7 @@
             // Yeni doğrulama kodu gönder butonuna tıklandığında
             $('#resendButton').click(function () {
                 // Yeni doğrulama kodu gönderme isteği
-                $.post('/Sms/ResendVerificationCode', {}, function (response) {
+                $.post('/User/ResendVerificationCode', {}, function (response) {
                     if (response.success) {
                         $('#resultMessage').html('<div class="alert alert-success">' + response.message + '</div>');
                         remainingTime = 300; // Yeni 5 dakika başlat

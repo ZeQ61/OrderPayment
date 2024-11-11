@@ -61,10 +61,10 @@
                 
 
                 // AJAX ile Register aksiyonuna veri gönder
-                $.post('/Sms/Register', userData, function (response) {
+                $.post('/User/Register', userData, function (response) {
                     if (response.success) {
                         alert("Doğrulama kodu gönderildi.");
-                        window.location.href = '/Sms/VerifySms';  // Doğrulama sayfasına yönlendir
+                        window.location.href = '/User/VerifyCode';  // Doğrulama sayfasına yönlendir
                     } else {
                         alert("Bir hata oluştu: " + response.message);
                     }
