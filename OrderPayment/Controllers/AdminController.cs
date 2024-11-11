@@ -7,7 +7,7 @@ namespace OrderPayment.Controllers
         // Admin Paneli Sayfası//
         public IActionResult AdminPanel()
         {
-            return View();  // Admin Paneli görünümüne yönlendirir
+            return View();  // Admin Paneli görünümüne yönlendirir//
         }
 
         // Ürün Ekle Sayfası
