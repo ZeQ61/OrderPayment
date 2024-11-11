@@ -8,6 +8,8 @@ namespace OrderPayment.Models
     public class VerificationCode
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Otomatik artış ayarı
+
         public int VerificationCodeId { get; set; }
 
         [Required]

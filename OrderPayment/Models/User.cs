@@ -9,6 +9,8 @@ namespace OrderPayment.Models
     public class User
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Otomatik artış ayarı
+
         public int Id { get; set; }
 
         [Required]
@@ -18,6 +20,9 @@ namespace OrderPayment.Models
         [Required]
         [StringLength(50, ErrorMessage = "Last name cannot be longer than 50 characters.")]
         public string LastName { get; set; } = string.Empty;
+
+        public string Password { get; set; }
+
 
         [Required]
         [StringLength(256, ErrorMessage = "Password cannot be longer than 256 characters.")]

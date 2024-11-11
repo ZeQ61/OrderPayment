@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderPayment.Models
 {
     public class Admin
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Otomatik artış ayarı
+
         public int AdminId { get; set; }
 
         [Required]

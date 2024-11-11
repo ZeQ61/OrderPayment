@@ -8,6 +8,8 @@ namespace OrderPayment.Models
     public class Order
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Otomatik artış ayarı
+
         public int OrderId { get; set; }
 
         [Required]

@@ -4,6 +4,10 @@ using OrderPayment.Models;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Linq;
+using BCrypt.Net;
+
+using Microsoft.EntityFrameworkCore;
+using System.Web.Helpers;
 
 public class UserController : Controller
 {
@@ -31,65 +35,69 @@ public class UserController : Controller
     [HttpPost]
     public IActionResult Register(User user)
     {
-        if (string.IsNullOrEmpty(user.PhoneNumber))
+        if (string.IsNullOrWhiteSpace(user.PhoneNumber))
         {
             return Json(new { success = false, message = "Telefon numarası gereklidir." });
         }
 
-        // Kullanıcı var mı kontrolü
-        var existingUser = _context.Users.FirstOrDefault(u => u.PhoneNumber == user.PhoneNumber);
-        if (existingUser != null)
+        if (string.IsNullOrWhiteSpace(user.Password) || user.Password.Length < 6)
+        {
+            return Json(new { success = false, message = "Şifre en az 6 karakter uzunluğunda olmalıdır." });
+        }
+
+        // Telefon numarasına göre kullanıcı kontrolü
+        if (_context.Users.Any(u => u.PhoneNumber == user.PhoneNumber))
         {
             return Json(new { success = false, message = "Bu telefon numarasıyla zaten kayıtlı bir kullanıcı var." });
         }
 
+        // Şifre hashleme
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password);
+        user.Password = user.Password; // Düz şifreyi saklamıyoruz
+
         // Doğrulama kodu oluştur
         var verificationCode = GenerateVerificationCode();
 
-        // SMS gönderimi
+        // SMS mesajı
         var message = $"Merhaba {user.FirstName},\n\n" +
-                      "Hesabınızı güvenli bir şekilde oluşturabilmeniz için, aşağıda yer alan doğrulama kodunu kullanabilirsiniz:\n\n" +
+                      "Hesabınızı güvenli bir şekilde oluşturabilmeniz için aşağıdaki doğrulama kodunu kullanabilirsiniz:\n\n" +
                       $"Doğrulama Kodu: {verificationCode}\n\n" +
                       "Kodunuzun geçerlilik süresi sınırlıdır, lütfen en kısa sürede giriniz.\n\n" +
                       "Teşekkürler!";
-        bool smsSent = _smsService.SendSms(user.PhoneNumber, message);
 
-        if (smsSent)
+        // SMS gönderimi
+        if (!_smsService.SendSms(user.PhoneNumber, message))
         {
-            // Kullanıcıyı veritabanına ekle ve kaydet
-            user.IsActive = false; // Kullanıcı aktif değil
-            user.CreatedAt= DateTime.Now;
-            _context.Users.Add(user);
-            _context.SaveChanges();
-
-            // Doğrulama kodu oluştur ve kullanıcıya bağla
-            var verification = new VerificationCode
-            {
-                Code = verificationCode,
-                SentAt = DateTime.UtcNow,
-                ExpiryInSeconds = 60, // Kod geçerlilik süresi 1 dakika (60 saniye)
-                UserId = user.Id // Kullanıcıya bağla
-            };
-
-            _context.VerificationCodes.Add(verification); // Doğrulama kodunu veritabanına ekle
-            _context.SaveChanges(); // Doğrulama kodunu kaydet
-
-            // Kullanıcıyı session'a kaydet
-            HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user,
-                new JsonSerializerSettings
-                {
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-                }));
-
-            return Json(new { success = true });
+            return Json(new { success = false, message = "SMS gönderilemedi. Lütfen daha sonra tekrar deneyin." });
         }
-        else
+
+        // Kullanıcı bilgilerini kaydet
+        user.IsActive = false;
+        user.CreatedAt = DateTime.UtcNow;
+
+        _context.Users.Add(user);
+        _context.SaveChanges();
+
+        // Doğrulama kodunu kaydet
+        var verification = new VerificationCode
         {
-            return Json(new { success = false, message = "SMS gönderilemedi." });
-        }
+            Code = verificationCode,
+            SentAt = DateTime.UtcNow,
+            ExpiryInSeconds = 20, // 3 dakika
+            UserId = user.Id
+        };
+
+        _context.VerificationCodes.Add(verification);
+        _context.SaveChanges();
+
+        // Session'a kullanıcıyı kaydet
+        HttpContext.Session.SetString("User", JsonConvert.SerializeObject(user, new JsonSerializerSettings
+        {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+        }));
+
+        return Json(new { success = true, message = "Kayıt başarılı! Doğrulama kodu gönderildi." });
     }
-
-
 
 
 
@@ -104,52 +112,55 @@ public class UserController : Controller
         }
 
         var user = JsonConvert.DeserializeObject<User>(userJson);
+        user = _context.Users.AsNoTracking().FirstOrDefault(u => u.Id == user.Id);
 
-        // Kullanıcının doğrulama kodunu kontrol et
         var verification = _context.VerificationCodes
+            .AsNoTracking()
             .Where(vc => vc.UserId == user.Id && vc.Code == verificationCode)
-            .OrderByDescending(vc => vc.SentAt) // En son gönderilen kodu al
+            .OrderByDescending(vc => vc.SentAt)
             .FirstOrDefault();
 
         if (verification != null)
         {
-            // Kodun süresinin bitip bitmediğini kontrol et
-            if (verification.IsExpired()) // Yeni modelde doğrulama kodu süresi kontrolü
+            if (verification.IsExpired())
             {
                 return Json(new { success = false, message = "Geçersiz veya süresi dolmuş doğrulama kodu!" });
             }
 
-            // Kalan süreyi hesapla
-            var remainingTime = verification.GetRemainingTime(); // Kalan süreyi hesapla (saniye cinsinden)
+            user.IsActive = true;
+            _context.Users.Attach(user);
+            _context.SaveChanges();
 
-            // Eğer geçerli kodsa, kullanıcıyı aktif yap
-            if (!verification.IsExpired())
-            {
-                user.IsActive = true; // Kullanıcıyı aktif yap
-                _context.Users.Update(user);
-                _context.SaveChanges();
-
-                return Json(new { success = true, message = "Kullanıcı başarıyla kaydedildi ve aktif edildi.", remainingTime = remainingTime });
-            }
+            return Json(new { success = true, message = "Kullanıcı başarıyla kaydedildi ve aktif edildi." });
         }
         else
         {
-            // Kullanıcı daha önce doğrulama kodunu kullanmışsa ve yeni doğrulama kodu alınması isteniyorsa hata mesajı
             return Json(new { success = false, message = "Geçersiz doğrulama kodu veya kodu daha önce kullanmışsınız." });
         }
-
-        return Json(new { success = false, message = "Geçersiz doğrulama kodu!" });
     }
 
 
 
 
     [HttpPost]
-    public IActionResult ResendVerificationCode(User user)
+    public IActionResult ResendVerificationCode()
     {
+        // Kullanıcı verisini session'dan al ve deserialize et
+        var userJson = HttpContext.Session.GetString("User");
+        if (string.IsNullOrEmpty(userJson))
+        {
+            return Json(new { success = false, message = "Geçersiz kullanıcı verisi!" });
+        }
+
+        var user = JsonConvert.DeserializeObject<User>(userJson);
+        if (user == null)
+        {
+            return Json(new { success = false, message = "Kullanıcı bulunamadı!" });
+        }
+
         // Kullanıcının en son doğrulama kodunu al
         var existingVerification = _context.VerificationCodes
-            .Where(vc => vc.UserId == user.Id)
+            .Where(vc => vc.UserId == user.Id) // Gelen user nesnesindeki Id'yi kullanıyoruz
             .OrderByDescending(vc => vc.SentAt) // En son gönderilen doğrulama kodu
             .FirstOrDefault();
 
@@ -157,21 +168,21 @@ public class UserController : Controller
         if (existingVerification != null)
         {
             // Süresi dolmuşsa yeni bir doğrulama kodu gönder
-            if (existingVerification.IsExpired()) // Yeni modelde doğrulama kodunun süresi kontrolü
+            if (existingVerification.IsExpired()) // Kodun süresinin dolup dolmadığını kontrol et
             {
                 // Yeni doğrulama kodu oluştur
                 var verificationCode = GenerateVerificationCode();
 
                 // SMS gönderimi
                 var message = $"Merhaba {user.FirstName} {user.LastName}, yeni doğrulama kodunuz: {verificationCode}";
-                bool smsSent = _smsService.SendSms(user.PhoneNumber, message);
+                bool smsSent = _smsService.SendSms(user.PhoneNumber, message); // Kullanıcıya SMS gönder
 
                 if (smsSent)
                 {
                     // Yeni doğrulama kodunu veritabanına kaydet
                     existingVerification.Code = verificationCode;
                     existingVerification.SentAt = DateTime.UtcNow; // Kodun gönderilme zamanı güncelleniyor
-                    existingVerification.ExpiryInSeconds = 60; // Kod geçerlilik süresi 60 saniye olarak ayarlandı
+                    existingVerification.ExpiryInSeconds = 20; // Kod geçerlilik süresi 60 saniye olarak ayarlandı
 
                     _context.SaveChanges(); // Güncellenmiş doğrulama kodunu kaydet
 
@@ -247,13 +258,15 @@ public class UserController : Controller
     }
 
     // Kalan süreyi hesaplayan metod
+    // Kalan süreyi hesaplayan metod
     private int GetRemainingTimeForVerificationCode(VerificationCode verificationCode)
     {
         var expiryTime = verificationCode.SentAt.AddSeconds(verificationCode.ExpiryInSeconds); // Kodun geçerlilik süresi hesaplanıyor
 
         // Eğer süre dolmuşsa 0 döndür, değilse kalan süreyi döndür
         var remainingTime = (expiryTime - DateTime.UtcNow).TotalSeconds;
-        return remainingTime > 0 ? (int)remainingTime : 0;
+
+        return remainingTime > 0 ? (int)remainingTime : 0; // Süre 0'dan küçükse 0 döndür
     }
 
     private string GenerateVerificationCode()
